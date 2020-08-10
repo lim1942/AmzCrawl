@@ -12,7 +12,7 @@ def save_to_file(cate,filename,text,_type='txt',columns=None):
             f.write(text)
     elif _type == 'csv':
         df = pd.DataFrame(text)
-        df.to_csv(abs_filename+'.csv',index=False,columns=columns,date_format="%Y-%m-%d %H:%M%:%S")
+        df.to_csv(abs_filename+'.csv',index=False,columns=columns,date_format="%Y-%m-%d %H:%M%:%S",quoting=1)
         print(abs_filename+'.csv\n')
 
 

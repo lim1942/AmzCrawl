@@ -7,7 +7,7 @@ from datetime import datetime
 from lxml.html import fromstring
 from tool.savior import save_to_file,file_exists,get_file_content
 from BSrank.change_location import change
-from BSrank.analyze import handle
+from BSrank.analyze import handle,FIELDS
 
 # # 设置socket 代理
 # import socket
@@ -82,10 +82,10 @@ def main(target):
     count = len(DATA)
     for index,data in enumerate(DATA):
         print(f"analyze ==================  {index+1}/{count} ================== {target}")
-        data.update(handle(data['title']))
+        analyze_data = handle(data['title'])
+        data.update(analyze_data)
         items.append(data)
-    fields = list(data)
-    print('\nHEADERS:-----------\n',fields,'\n')
+    fields = ['title','url','date'] + FIELDS
     save_to_file('BSrank',target,items, _type='csv',columns=fields)
 
 

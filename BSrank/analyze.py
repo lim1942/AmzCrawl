@@ -3,6 +3,8 @@ from tool.savior import get_file_content
 from lxml.html import fromstring,tostring
 
 
+FIELDS = ['all_review_cnt', 'top_three_review_cnt', 'top_three_review_rate', 'review_lt_50_rate', 'max_review', 'min_review', 'avg_review', 'max_star', 'min_star', 'avg_star', 'max_price', 'min_price', 'avg_price', 'available_cnt', 'first_star', 'first_price', 'first_review_cnt', 'first_review_rate', 'first_url', 'second_star', 'second_price', 'second_review_cnt', 'second_review_rate', 'second_url', 'third_star', 'third_price', 'third_review_cnt', 'third_review_rate', 'third_url', 'the_20th_star', 'the_20th_price', 'the_20th_review_cnt', 'the_20th_review_rate', 'the_20th_url', 'last_star', 'last_price', 'last_review_cnt', 'last_review_rate', 'last_url']
+
 def handle(title):
     result = dict()
 
@@ -190,8 +192,8 @@ def handle(title):
     last_review_rate = round(last_review_cnt/all_review_cnt,4) if all_review_cnt and (last_review_cnt is not None) else None
     last_url = items[-1]['url']
 
-    result['all_review_cnt'] = all_review_cnt
-    result['top_three_review_cnt'] = top_three_review_cnt
+    result['all_review_cnt'] = int(all_review_cnt)
+    result['top_three_review_cnt'] = int(top_three_review_cnt)
     result['top_three_review_rate'] = top_three_review_rate
     result['review_lt_50_rate'] = round(review_lt_50_cnt / available_cnt,4) if available_cnt else None
     result['max_review'] = max_review
@@ -238,4 +240,4 @@ if __name__ == "__main__":
     # for index, _ in enumerate(goods):
     #     print(index+1,total)
     #     print(handle(_))
-    print(handle('Any Department|||Clothing, Shoes & Jewelry|||Women|||Clothing|||Tops, Tees & Blouses|||Polos'))
+    print(handle('Any Department|||Computers & Accessories|||Desktops'))

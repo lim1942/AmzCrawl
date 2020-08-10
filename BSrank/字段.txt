@@ -1,0 +1,41 @@
+title -- 排行榜名
+url -- 排行榜url
+date -- 排行榜时间
+all_review_cnt -- 排行榜总频分个数
+top_three_review_cnt --  排行榜前三名评分个数
+top_three_review_rate --  排行榜前三名评分个数占比
+max_review --  排行榜最大的评分数
+min_review --  排行榜最小的评分数（不包括无评分）
+avg_review --  排行榜平均评分数
+max_star --  排行榜最大评分星级
+min_star --  排行榜最小评分星级
+avg_star --  排行榜平均评分星级
+max_price --  排行榜最大价格
+min_price --  排行榜最小价格
+avg_price --  排行榜平均价格
+available_cnt -- 排行榜正常销售商品数
+first_star --  排行榜第一名的星级
+first_price --  排行榜第一名的价格
+first_review_cnt --  排行榜第一名的评分数
+first_review_rate --  排行榜第一名评分个数占比
+first_url --  排行榜第一名商品的url
+second_star --  排行榜第二名 。。。。
+second_price --
+second_review_cnt --
+second_review_rate --
+second_url --
+third_star --  排行榜第三名。。。。
+third_price --
+third_review_cnt --
+third_review_rate --
+third_url --
+the_20th_star -- 排行榜第二十名。。。。。
+the_20th_price --
+the_20th_review_cnt --
+the_20th_review_rate --
+the_20th_url --
+last_star -- 排行榜最后一名。。。。
+last_price --
+last_review_cnt --
+last_review_rate --
+last_url --
