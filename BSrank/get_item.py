@@ -6,7 +6,7 @@ import requests
 from datetime import datetime
 from lxml.html import fromstring
 from tool.savior import save_to_file,file_exists,get_file_content
-from BSrank.change_location import change
+from BSrank.get_location import change
 from BSrank.analyze import handle,FIELDS
 
 # # 设置socket 代理

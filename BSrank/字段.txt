@@ -4,6 +4,7 @@ date -- 排行榜时间
 all_review_cnt -- 排行榜总频分个数
 top_three_review_cnt --  排行榜前三名评分个数
 top_three_review_rate --  排行榜前三名评分个数占比
+review_lt_50_rate -- 排行榜内reviews小于50的商品占比
 max_review --  排行榜最大的评分数
 min_review --  排行榜最小的评分数（不包括无评分）
 avg_review --  排行榜平均评分数
