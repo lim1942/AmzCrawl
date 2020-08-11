@@ -92,7 +92,8 @@ def main(target_list):
         analyze_data.update(page.__dict__)
         cols.append(analyze_data)
     fields = list(Page().__dict__) + FIELDS
-    save_to_file('BSrank',target,cols, _type='csv',columns=fields)
+    filename = "|||".join(target_list[1:])
+    save_to_file('BSrank',filename,cols, _type='csv',columns=fields)
 
 
 if __name__ == "__main__":
