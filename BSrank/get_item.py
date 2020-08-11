@@ -1,5 +1,4 @@
 import os
-import re
 import sys
 import time
 import requests
@@ -8,7 +7,6 @@ from lxml.html import fromstring
 from tool.savior import save_to_file,file_exists,get_file_content
 from BSrank.get_location import change
 from BSrank.analyze import handle,FIELDS
-
 # # 设置socket 代理
 # import socket
 # import socks
@@ -16,7 +14,6 @@ from BSrank.analyze import handle,FIELDS
 # socket.socket = socks.socksocket
 
 
-DATA = list()
 HEADERS = {
 "upgrade-insecure-requests":"1",
 "user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36",
@@ -28,75 +25,78 @@ HEADERS = {
 "referer":"https://www.amazon.com/Best-Sellers/zgbs/amazon-devices/ref=zg_bs_nav_0",
 "accept-encoding":"gzip, deflate, br",
 }
+# 更改亚马逊发货地后cookies
+COOKIES = change()
+# 存储所有页面对象
+DATA = list()
 
 
-def get_all(title,department_url,cookies):
-    item = {'title':title,'url':department_url,'date':datetime.now()}
-    DATA.append(item)
-    print('crawl',item)
-    # 缓存数据
+# 页面对象
+class Page:
+    def __init__(self):
+        self.title = None
+        self.url = None
+        self.date = None
+
+def storage_page(title,url):
+    global COOKIES
+    # 1.记录当前页面位置和地址
+    print(time.strftime("%Y-%m-%d %H:%M:%S"),title,url)
+    page = Page()
+    page.title = title
+    page.url = url
+    page.date = datetime.now()
+    DATA.append(page)
+    # 2.读取本地页面或请求页面
     if file_exists('BSrank/item',title):
         text = get_file_content('BSrank/item',title)
     else:
-        resp = requests.get(department_url,headers=HEADERS,cookies=cookies)
-        resp.encoding = 'utf-8'
-        text = resp.text
-        re_search = re.search(r"(Deliver to[\s\S]*?)</div>", text).groups()[0]
-        if '98345' not in re_search:
-            raise Exception('bad location !!!')
-        save_to_file('BSrank/item',title,text)
-    xml = fromstring(text)
-    # 当前点击span
+        while True:
+            try:
+                resp = requests.get(url,headers=HEADERS,cookies=COOKIES,timeout=10)
+                resp.encoding = 'utf-8'
+                text = resp.text
+                if 'Keyport 98345' not in text:
+                    COOKIES = change()
+                    raise Exception('bad location !!!')
+                save_to_file('BSrank/item',title,text)
+                break
+            except Exception as e:
+                print("!!! Error in request",title,url,str(e))
+                time.sleep(30)
+    return text
+
+def get_all(title,department_url,target='Any Department'):
+    # 1.获取当前页面
+    xml = fromstring(storage_page(title,department_url))
+    # 2.当前点击ul还有子ul就继续递归调用
     zg_selected_span = xml.xpath("//span[@class='zg_selected']")[0]
-    # 当前点击所在ul
     zg_selected_ul = zg_selected_span.xpath('./../..')[0]
-    # 当前点击是否为根节点
     if zg_selected_ul.xpath('./ul'):
         for li in  zg_selected_ul.xpath('./ul/li'):
             current_department_name = li.xpath('./a/text()')[0].replace(os.sep,' ')
             current_department_url = li.xpath('./a/@href')[0]
             current_title = title + '|||' + current_department_name
-            get_all(current_title,current_department_url,cookies)
+            if current_title.startswith(target) or target.startswith(current_title):
+                get_all(current_title,current_department_url)
 
-
-def main(target):
-    cookies = change()
+def main(target_list):
+    # 1.请求节点下页面
     url = 'https://www.amazon.com/Best-Sellers/zgbs/ref=zg_bs_unv_0_amazon-devices_1'
-    resp = requests.get(url,headers=HEADERS,cookies=cookies)
-    resp.encoding = 'utf-8'
-    xml = fromstring(resp.text)
-    department_lis = xml.xpath("//ul[@id='zg_browseRoot']/ul/li")
-    # 获取所有大类
-    count = len(department_lis)
-    for index,li in enumerate(department_lis):
-        department_name = li.xpath('./a/text()')[0]
-        department_url = li.xpath('./a/@href')[0]
-        # 需要跟进的大类
-        if department_name == target:
-            print('\n************************************'+ department_name,department_url,f' {index+1}/{count} ************************************')
-            title = 'Any Department' + '|||' + department_name
-            get_all(title,department_url,cookies)
-
-    # 分析爬取的数据得到报表
-    items = list()
+    if target_list[0] != 'Any Department': target_list.insert(0,'Any Department')
+    target = "|||" .join(target_list)
+    get_all('Any Department',url,target)
+    # 2.分析所采集页面
+    cols = list()
     count = len(DATA)
-    for index,data in enumerate(DATA):
+    for index,page in enumerate(DATA[1:]):
         print(f"analyze ==================  {index+1}/{count} ================== {target}")
-        analyze_data = handle(data['title'])
-        data.update(analyze_data)
-        items.append(data)
-    fields = ['title','url','date'] + FIELDS
-    save_to_file('BSrank',target,items, _type='csv',columns=fields)
-
+        analyze_data = handle(page.title)
+        analyze_data.update(page.__dict__)
+        cols.append(analyze_data)
+    fields = list(Page().__dict__) + FIELDS
+    save_to_file('BSrank',target,cols, _type='csv',columns=fields)
 
 
 if __name__ == "__main__":
-    target = sys.argv[1]
-    while 1:
-        try:
-            print(target)
-            main(target)
-            break
-        except Exception as e:
-            print(e)
-            time.sleep(60)
+    main(sys.argv[1:].copy())
