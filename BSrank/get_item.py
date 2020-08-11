@@ -66,17 +66,15 @@ def storage_page(title,url):
     return text
 
 def get_all(title,department_url,target='Any Department'):
-    # 当前点击ul还有子ul继续递归
     xml = fromstring(storage_page(title,department_url))
     zg_selected_ul = xml.xpath("//span[@class='zg_selected']/../..")[0]
-    if zg_selected_ul.xpath('./ul'):
-        for li in  zg_selected_ul.xpath('./ul/li'):
-            current_department_name = li.xpath('./a/text()')[0].replace(os.sep,' ')
-            current_department_url = li.xpath('./a/@href')[0]
-            current_title = title + '|||' + current_department_name
-            # 只递归调用target子节点
-            if current_title.startswith(target) or target.startswith(current_title):
-                get_all(current_title,current_department_url)
+    for li in  zg_selected_ul.xpath('./ul/li'):
+        current_department_name = li.xpath('./a/text()')[0].replace(os.sep,' ')
+        current_department_url = li.xpath('./a/@href')[0]
+        current_title = title + '|||' + current_department_name
+        # 只递归调用target子节点
+        if current_title.startswith(target) or target.startswith(current_title):
+            get_all(current_title,current_department_url)
 
 def main(target_list):
     # 1.请求节点下target节点的页面
