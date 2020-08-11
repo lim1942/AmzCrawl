@@ -13,7 +13,6 @@ from BSrank.analyze import handle,FIELDS
 # socks.set_default_proxy(socks.SOCKS5, "127.0.0.1", 2080)
 # socket.socket = socks.socksocket
 
-
 HEADERS = {
 "upgrade-insecure-requests":"1",
 "user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36",
@@ -67,16 +66,15 @@ def storage_page(title,url):
     return text
 
 def get_all(title,department_url,target='Any Department'):
-    xml = fromstring(storage_page(title,department_url))
-    zg_selected_span = xml.xpath("//span[@class='zg_selected']")[0]
-    zg_selected_ul = zg_selected_span.xpath('./../..')[0]
     # 当前点击ul还有子ul继续递归
+    xml = fromstring(storage_page(title,department_url))
+    zg_selected_ul = xml.xpath("//span[@class='zg_selected']/../..")[0]
     if zg_selected_ul.xpath('./ul'):
         for li in  zg_selected_ul.xpath('./ul/li'):
             current_department_name = li.xpath('./a/text()')[0].replace(os.sep,' ')
             current_department_url = li.xpath('./a/@href')[0]
             current_title = title + '|||' + current_department_name
-            # 只跟进目标target节点
+            # 只递归调用target子节点
             if current_title.startswith(target) or target.startswith(current_title):
                 get_all(current_title,current_department_url)
 
@@ -88,9 +86,8 @@ def main(target_list):
     get_all('Any Department',url,target)
     # 2.分析所采集页面
     cols = list()
-    count = len(DATA)
     for index,page in enumerate(DATA[1:]):
-        print(f"analyze ==================  {index+1}/{count} ================== {target}")
+        print(f"analyze ==================  {index+1}/{len(DATA)} ================== {target}")
         analyze_data = handle(page.title)
         analyze_data.update(page.__dict__)
         cols.append(analyze_data)
