@@ -28,6 +28,10 @@ HEADERS = {
 COOKIES = change()
 # 存储所有页面对象
 DATA = list()
+# 根节点名
+ROOT = 'Any Department'
+# 节点分级符号
+NODE_SEP = "|||"
 
 
 # 页面对象
@@ -37,62 +41,57 @@ class Page:
         self.url = None
         self.date = None
 
-def storage_page(title,url):
+def get_all(node_name,node_url,target=ROOT):
     global COOKIES
-    # 1.记录当前页面位置和地址
-    print(time.strftime("%Y-%m-%d %H:%M:%S"),title,url)
+    # 1.记录当前节点页面位置和地址
+    print(time.strftime("%Y-%m-%d %H:%M:%S"),node_name,node_url)
     page = Page()
-    page.title = title
-    page.url = url
+    page.title = node_name
+    page.url = node_url
     page.date = datetime.now()
     DATA.append(page)
-    # 2.读取本地页面或请求页面
-    if file_exists('BSrank/item',title):
-        text = get_file_content('BSrank/item',title)
+    # 2.获取节点页面，本地缓存或请求
+    if file_exists('BSrank/item',node_name):
+        text = get_file_content('BSrank/item',node_name)
     else:
         while True:
             try:
-                resp = requests.get(url,headers=HEADERS,cookies=COOKIES,timeout=10)
+                resp = requests.get(node_url,headers=HEADERS,cookies=COOKIES,timeout=10)
                 resp.encoding = 'utf-8'
                 text = resp.text
                 if 'Keyport 98345' not in text:
                     COOKIES = change()
                     raise Exception('bad location !!!')
-                save_to_file('BSrank/item',title,text)
+                save_to_file('BSrank/item',node_name,text)
                 break
             except Exception as e:
-                print("!!! Error in request",title,url,str(e))
+                print("!!! Error in request",node_name,node_url,str(e))
                 time.sleep(30)
-    return text
+    # 3.遍历目录节点，只递归调用target节点
+    xml = fromstring(text)
+    for li in  xml.xpath("//span[@class='zg_selected']/../../ul/li"):
+        li_node_name = node_name + NODE_SEP + li.xpath('./a/text()')[0].replace(os.sep,' ')
+        li_node_url = li.xpath('./a/@href')[0]
+        if li_node_name.startswith(target) or target.startswith(li_node_name):
+            get_all(li_node_name,li_node_url)
 
-def get_all(title,department_url,target='Any Department'):
-    xml = fromstring(storage_page(title,department_url))
-    zg_selected_ul = xml.xpath("//span[@class='zg_selected']/../..")[0]
-    for li in  zg_selected_ul.xpath('./ul/li'):
-        current_department_name = li.xpath('./a/text()')[0].replace(os.sep,' ')
-        current_department_url = li.xpath('./a/@href')[0]
-        current_title = title + '|||' + current_department_name
-        # 只递归调用target子节点
-        if current_title.startswith(target) or target.startswith(current_title):
-            get_all(current_title,current_department_url)
-
-def main(target_list):
-    # 1.请求节点下target节点的页面
+def main(target):
+    # 指定节点下target节点的页面
     url = 'https://www.amazon.com/Best-Sellers/zgbs/ref=zg_bs_unv_0_amazon-devices_1'
-    if target_list[0] != 'Any Department': target_list.insert(0,'Any Department')
-    target = "|||" .join(target_list)
-    get_all('Any Department',url,target)
-    # 2.分析所采集页面
+    get_all(ROOT,url,target)
     cols = list()
     for index,page in enumerate(DATA[1:]):
-        print(f"analyze ==================  {index+1}/{len(DATA)} ================== {target}")
+        print(f"analyze ================== {index+1}/{len(DATA)} ================== {target}")
         analyze_data = handle(page.title)
         analyze_data.update(page.__dict__)
         cols.append(analyze_data)
     fields = list(Page().__dict__) + FIELDS
-    filename = "|||".join(target_list[1:])
-    save_to_file('BSrank',filename,cols, _type='csv',columns=fields)
+    save_to_file('BSrank',target,cols, _type='csv',columns=fields)
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:].copy())
+    target_list = sys.argv[1:].copy()
+    if target_list[0] != ROOT:
+        target_list.insert(0,ROOT)
+    target = NODE_SEP .join(target_list)
+    main(target)
