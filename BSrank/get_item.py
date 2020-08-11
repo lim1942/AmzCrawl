@@ -67,21 +67,21 @@ def storage_page(title,url):
     return text
 
 def get_all(title,department_url,target='Any Department'):
-    # 1.获取当前页面
     xml = fromstring(storage_page(title,department_url))
-    # 2.当前点击ul还有子ul就继续递归调用
     zg_selected_span = xml.xpath("//span[@class='zg_selected']")[0]
     zg_selected_ul = zg_selected_span.xpath('./../..')[0]
+    # 当前点击ul还有子ul继续递归
     if zg_selected_ul.xpath('./ul'):
         for li in  zg_selected_ul.xpath('./ul/li'):
             current_department_name = li.xpath('./a/text()')[0].replace(os.sep,' ')
             current_department_url = li.xpath('./a/@href')[0]
             current_title = title + '|||' + current_department_name
+            # 只跟进目标target节点
             if current_title.startswith(target) or target.startswith(current_title):
                 get_all(current_title,current_department_url)
 
 def main(target_list):
-    # 1.请求节点下页面
+    # 1.请求节点下target节点的页面
     url = 'https://www.amazon.com/Best-Sellers/zgbs/ref=zg_bs_unv_0_amazon-devices_1'
     if target_list[0] != 'Any Department': target_list.insert(0,'Any Department')
     target = "|||" .join(target_list)
